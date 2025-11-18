@@ -728,7 +728,7 @@ Archival (only if legacy reasons force it)
 
 ⚠️ Slow performance, not recommended for modern EC2 setups.
 
-#################
+######################
 Practical on EBS
 ######################
 1) Create EC2 VM (VM-1)
@@ -744,7 +744,7 @@ Availability Zone: Ensure you select the same Availability Zone (AZ) as VM-1 (e.
 
 3) Attach Additional Volume to EC2 VM-1
 After creating the additional EBS volume, right-click on it and select Attach.
-Choose the instance VM-1 and attach the volume to it (typically as /dev/xvdb).
+Choose the instance VM-1 and attach the volume to it (typically as /dev/sdb).
 
 4) Connect with VM-1 and Check Volumes Attached
 SSH into VM-1 using the key pair you created during the EC2 instance launch.
@@ -756,13 +756,14 @@ The output should list both the root volume (e.g., /dev/xvda) and the additional
 
 5) Store Data in Additional Volume by Mounting
 Format the additional volume to use the ext4 file system:
-$ sudo mkfs -t ext4 /dev/xvdb
+$ sudo mkfs -t ext4 /dev/sdb
 
 Create a mount directory for the additional volume:
-$ mkdir psa
+$ cd ~
+$ sudo mkdir psa
 
 Mount the volume to the psa directory:
-$ sudo mount /dev/xvdb psa
+$ sudo mount /dev/sdb psa
 
 Change into the psa directory and create files to store data:
 $ cd psa
@@ -771,7 +772,7 @@ $ sudo touch f1.txt f2.txt
 This step creates two text files: f1.txt and f2.txt on the additional volume.
 
 6) Detach Additional Volume from EC2 VM-1
-Go back to the EC2 Dashboard, select Volumes, find the additional volume (/dev/xvdb), and detach it from VM-1.
+Go back to the EC2 Dashboard, select Volumes, find the additional volume (/dev/sdb), and detach it from VM-1.
 
 7) Create a New EC2 VM (VM-2)
 Launch a new EC2 instance (VM-2) with the same Amazon Linux AMI or any other OS.
@@ -779,7 +780,7 @@ Ensure VM-2 is in the same AZ as VM-1 for volume attachment.
 
 8) Attach Additional Volume to EC2 VM-2
 Attach the previously detached additional volume (from VM-1) to VM-2.
-It will show up as /dev/xvdb (or another name, depending on the device name you selected).
+It will show up as /dev/sdb (or another name, depending on the device name you selected).
 
 9) Check the Data on the Volume
 SSH into VM-2.
@@ -787,10 +788,10 @@ SSH into VM-2.
 Run the following command to check the attached volumes:
 $ lsblk
 
-Mount the additional volume (/dev/xvdb) to a new directory:
+Mount the additional volume (/dev/sdb) to a new directory:
 
 $ mkdir demo
-$ sudo mount /dev/xvdb demo
+$ sudo mount /dev/sdb demo
 
 Now, check the files:
 $ ls -l demo
@@ -803,6 +804,7 @@ You have successfully:
 -> Stored data in the volume.
 -> Detached and reattached the volume to a new EC2 instance.
 -> Verified that the data persisted.
+
 
 ####################################
 📸 What is a Snapshot in AWS?
@@ -965,9 +967,6 @@ Go to the Security Group → Inbound Rules
 Allow traffic on port 80 (HTTP) from Anywhere (0.0.0.0/0)
 Open browser and type: http://<your-ec2-public-ip>
 
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 🔄 What is a Load Balancer?
 #################################
 A Load Balancer is a system that automatically distributes incoming network or application traffic across multiple servers (or instances) to ensure no single server is overloaded with user request.
@@ -1009,11 +1008,19 @@ No.	Benefit	Explanation
 This instance will act as Server-1 running a simple static webpage.
 
 #!/bin/bash
-sudo su
-yum install httpd -y
-cd /var/www/html
-echo "<html><h1>Pankaj Sir Academy - 1</h1></html>" > index.html
-service httpd start
+sudo yum install -y httpd
+sudo systemctl enable httpd
+sudo systemctl start httpd
+echo "<html><body><h1>Hotel App 1</h1></body></html>" | sudo tee /var/www/html/index.html > /dev/null
+
+
+
+#!/bin/bash
+sudo yum install -y httpd
+sudo systemctl enable httpd
+sudo systemctl start httpd
+echo "<html><body><h1>Flight App 1</h1></body></html>" | sudo tee /var/www/html/index.html > /dev/null
+
 
 🛠️ What this does:
 Installs Apache web server
@@ -1023,11 +1030,11 @@ Starts the Apache server so it can serve requests on port 80
 ✅ Step-2: Create EC2 VM-2 with Similar User Data (but different content)
 
 #!/bin/bash
-sudo su
-yum install httpd -y
-cd /var/www/html
-echo "<html><h1>Pankaj Sir Academy - 2</h1></html>" > index.html
-service httpd start
+sudo yum install -y httpd
+sudo systemctl enable httpd
+sudo systemctl start httpd
+echo "<html><body><h1>Flight App 2</h1></body></html>" | sudo tee /var/www/html/index.html > /dev/null
+
 
 🧠 This makes sure both servers are functionally the same, but you can identify which one responds by looking at the response (Server - 1 or Server - 2).
 
@@ -1084,26 +1091,22 @@ Step	Action	Purpose
 5	Test via ALB DNS	Verifies successful load balancing
 Final	Delete resources	Avoid AWS billing
 
-
-
-
-
 #############################
 Auto Scaling
 #############################
 -> Will adjust the server numbers automatically depending on the user load
 -> Desired Capacity: At any given point of time how many severs should run
 -> Min Capacity: Min servers required
--> Max desired capacity: max number of servers AWS can scale upto based on load
+-> Max desired capacity: max number of servers AWS can scale up to based on load
 
 Note:
 ------
 Create a template -> AMI + Server type, to define when auto scaling creates a server on its own which AMI & server type it should use.
 
 
-####################################
-AWS S3 (Simple Storage Service)
-####################################
+########################################################################
+AWS S3 (Simple Storage Service) 
+########################################################################
 ✅ What is S3?
 
 It is a storage service provided by Amazon Web Services (AWS) where you can store unlimited data (like files, images, videos, backups, documents, etc.) safely in the cloud.
@@ -1447,8 +1450,6 @@ We can set up a database in two ways:
 a. On-Premises Database
 b. Cloud-Based Database
 
-
-
 🔑 Key Features of AWS RDS:
 ---------------------------------
 1. Supports multiple database engines: MySQL, PostgreSQL, Oracle, SQL Server, MariaDB, and Amazon Aurora.
@@ -1625,6 +1626,8 @@ public class D {
 
 }
 
+
+
 #####################
 ✅ What is AWS CLI?
 ########################
@@ -1665,7 +1668,7 @@ Response: In Json Format
 }
 
 #########################################################################################################
-Link to AWS Documention: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/index.html
+Link to AWS Documentation: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/index.html
 ##########################################################################################################
 
 #################################
@@ -1692,9 +1695,9 @@ Automated Actions: Based on alarms, you can trigger actions like:
 -> Auto-scaling
 -> Sending SNS notification
 
-#####################################################
-🧪 CloudWatch & SNS – Practical Guide
-#####################################################
+#####################################################################
+🧪 CloudWatch & SNS(Simple Notification Service) – Practical Guide
+#####################################################################
 
 ✅ Step 1: Create SNS Topic with Email Notification
 	a. Open AWS Console → Navigate to Amazon SNS.
@@ -1705,7 +1708,7 @@ Automated Actions: Based on alarms, you can trigger actions like:
 
 	d. Enter:
 
-		Topic name: pankaj
+		Topic name: arman
 
 	e. Click Create topic.
 
@@ -1756,7 +1759,7 @@ Automated Actions: Based on alarms, you can trigger actions like:
 
 ✅ Step 4: SSH into EC2 and Simulate High CPU Load
 	a. Connect to EC2 using your SSH client:
-        b. Install stress tool: sudo yum install stress -y
+        b. Install stress tool:  sudo yum install stress -y
 	c. Simulate CPU load (run this 3–4 times to trigger alarm): stress --cpu 8 -v --timeout 180s
 
 ✅ Step 5: Monitor CloudWatch Alarm and SNS Email Notification
@@ -1937,19 +1940,19 @@ An IP Address (Internet Protocol Address) is a unique identifier for a device on
 🧩 Types of IP Addresses
 ------------------------------
 1. IPv4 (Internet Protocol version 4)
-a. Format: xxx.xxx.xxx.xxx (e.g., 192.168.1.1)
-b. 32-bit address → Around 4.3 billion unique addresses
-c. It is divided inot 4 octets
+     a. Format: xxx.xxx.xxx.xxx (e.g., 192.168.1.1)
+     b. 32-bit address → Around 4.3 billion unique addresses
+     c. It is divided into 4 octets
 
-Note: Most widely used
+     Note: Most widely used
 
 2. IPv6 (Internet Protocol version 6)
 ---------------------------------------------
-a. Format: xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx(eg.  fe80::c1a2:739b:9d8e:b9e2%14)
-b. 128-bit address → Massive number of addresses
-c. Created due to shortage of IPv4 addresses
+     a. Format: xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx(eg.  fe80::c1a2:739b:9d8e:b9e2%14)
+     b. 128-bit address → Massive number of addresses
+     c. Created due to shortage of IPv4 addresses
 
-Note: Use ipconfig in your cmd to see ip details of your machine
+     Note: Use ipconfig in your cmd to see ip details of your machine
 
 📚 What is CIDR?
 ----------------------------
@@ -2023,10 +2026,538 @@ NAT Gateway stands for Network Address Translation Gateway.
 
 It allows instances in a private subnet to access the internet, but prevents the internet from initiating connections back to those instances.
 
+=============================================================================================================
+*************************************************************************************************************
+=============================================================================================================
+Step-by-Step: Create & Connect to a VPC
+Step 1️⃣ — Open the VPC Dashboard
+
+Go to AWS Management Console → Search VPC → Open it.
+
+Click “Your VPCs” → “Create VPC”.
+
+Step 2️⃣ — Create a VPC
+
+Choose VPC only option.
+
+Name tag: e.g., my-vpc
+
+IPv4 CIDR block: e.g., 10.0.0.0/16
+
+Leave IPv6 optional (you can add later).
+
+Click Create VPC.
+
+Step 3️⃣ — Create Subnets
+
+Create at least one Public and one Private subnet.
+
+Go to Subnets → Create subnet.
+
+Select your VPC (my-vpc).
+
+Public Subnet:
+
+Name: public-subnet-1
+
+CIDR block: 10.0.1.0/24
+
+Private Subnet:
+
+Name: private-subnet-1
+
+CIDR block: 10.0.2.0/24
+
+✅ Click Create subnet.
+
+Step 4️⃣ — Create and Attach an Internet Gateway (IGW)
+
+Go to Internet Gateways → Create Internet Gateway.
+
+Name: my-igw.
+
+Click Create Internet Gateway, then Attach to VPC → select my-vpc.
+
+Step 5️⃣ — Create a Route Table
+
+Go to Route Tables → Create Route Table.
+
+Name: public-rt.
+
+Choose VPC: my-vpc → Create.
+
+Then edit routes:
+
+Select public-rt → Routes → Edit routes → Add route
+
+Destination: 0.0.0.0/0
+
+Target: Internet Gateway (my-igw)
+
+Save changes.
+
+Step 6️⃣ — Associate Subnet with Route Table
+
+Go to Subnet associations → Edit subnet associations.
+
+Select public-subnet-1 → Save.
+
+✅ Now your public subnet has internet access.
+
+Step 7️⃣ — (Optional) Create a NAT Gateway for Private Subnet
+
+If you want your private subnet to access the internet (for software updates, etc.):
+
+Go to NAT Gateways → Create NAT Gateway.
+
+Select:
+
+Subnet → public-subnet-1
+
+Elastic IP → Allocate new one
+
+Click Create NAT Gateway.
+
+Then:
+
+Create a new Route Table: private-rt
+
+Add route:
+
+Destination: 0.0.0.0/0
+
+Target: NAT Gateway
+
+Associate this route table with private-subnet-1.
+
+Step 8️⃣ — Launch an EC2 Instance in Your VPC
+
+Go to EC2 → Launch Instance.
+
+Under Network, select:
+
+VPC: my-vpc
+
+Subnet: public-subnet-1 (for public access)
+
+Enable Auto-assign Public IP = Yes.
+
+Launch the instance.
+
+Step 9️⃣ — Connect to EC2 (Check VPC Connection)
+
+Once EC2 is running:
+
+Go to EC2 → Instances → Connect → EC2 Instance Connect
+OR
+
+Use SSH:
+
+ssh -i "my-key.pem" ec2-user@<Public-IP>
+
+If the connection succeeds → ✅ Your VPC setup is working and connected to the internet!
+
+
+=============================================================================================================
+*************************************************************************************************************
+☁️ EFS (Elastic File System) in AWS
+
+Definition:
+Amazon EFS (Elastic File System) is a fully managed, scalable, shared file storage service for use with AWS services and on-premises resources.
+It provides a simple, elastic file system that automatically grows and shrinks as you add or remove files.
+
+⚙️ Key Features
+
+Fully Managed – AWS handles infrastructure, scaling, and maintenance.
+
+Scalable – Storage automatically scales up or down (no manual resizing).
+
+Shared Access – Multiple EC2 instances can access the same file system concurrently.
+
+High Availability & Durability – Data stored across multiple Availability Zones (AZs).
+
+POSIX-Compliant – Works like a Linux file system — you can mount it easily.
+
+🧩 Use Cases
+
+Shared file storage for web servers (like multiple EC2s hosting the same app).
+
+Application data storage (Spring Boot apps saving logs or uploads).
+
+Machine Learning / Big Data workloads needing shared access.
+
+Container storage (ECS, EKS).
+
+🏗️ How It Works
+
+You create an EFS file system inside a VPC.
+
+You create mount targets in subnets of your VPC (so EC2 can connect).
+
+EC2 instances mount the EFS file system using NFS protocol.
+
+Once mounted, it behaves like a shared folder accessible by all connected instances.
+
+🔐 Access Control
+
+Controlled through Security Groups (for NFS port 2049).
+
+IAM policies can manage who can create or delete EFS.
+
+
+🧠 Interview Tip:
+
+Q: What is the difference between EBS, EFS, and S3?
+A:
+
+EBS → Block storage (attached to one EC2 only).
+
+EFS → File storage (shared across many EC2s).
+
+S3 → Object storage (for files, backups, data lakes).
+
+
+
+NFS (Network File System)
+🧩 Definition:
+
+NFS (Network File System) is a distributed file system protocol that allows multiple computers (clients) to access and share files over a network as if they were on their local disks.
+
+In AWS, EFS uses NFS protocol to let multiple EC2 instances read and write to the same shared storage.
+
+⚙️ How NFS Works
+
+One server (like EFS) stores the actual files.
+
+Other systems (like EC2 instances) mount that storage using NFS.
+
+Once mounted, you can access it via normal Linux commands (ls, cd, etc.) just like local storage.
+
+💡 In AWS Context
+
+EFS = NFS-based shared storage.
+
+EC2 instances connect to EFS using NFS port 2049.
+
+AWS automatically manages the NFS backend, so you don’t need to configure it manually.
+
+🔧 Example Commands
+
+If you want to mount EFS manually to an EC2 instance:
+
+# Install NFS client
+sudo yum install -y amazon-efs-utils
+
+# Create mount directory
+sudo mkdir /mnt/efs
+
+# Mount the EFS file system
+sudo mount -t efs fs-12345678:/ /mnt/efs
+
+# Verify mount
+df -h
+
+
+
+*************************************************************************************************************
+=============================================================================================================
+*************************************************************************************************************
+☁️ AWS CloudFormation
+📘 Definition:
+
+AWS CloudFormation is a service that helps you automate the creation and management of AWS infrastructure using code (templates) instead of manually creating resources from the console.
+
+It’s part of Infrastructure as Code (IaC).
+
+
+How It Works:-
+You write a CloudFormation template (in YAML or JSON).
+
+The template defines your AWS resources — e.g. EC2, S3, VPC, RDS, IAM, etc.
+
+CloudFormation reads the template and automatically provisions all the resources in the right order
+
+
+
+Example Template (YAML):==:
+
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  MyS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: my-demo-bucket-arman
+
+
+
+💡 Interview Summary
+
+What is AWS CloudFormation?	
+A service to define and provision AWS infrastructure using code (IaC).
+Format Used  ---------->>>	             YAML or JSON
+What is a Stack? ---------->>>               A group of AWS resources created from a single template.
+Key Benefit  ---------->>>	             Automates setup and ensures consistency across environments.
+Example Use  ---------->>>	             Create EC2, S3, VPC, and IAM resources in one go.
+
+
+
+Description of the EC2 CloudFormation Template
+
+This YAML file is used to automatically create and configure a complete environment in AWS using AWS CloudFormation — without manually creating each resource (like EC2, VPC, Subnet, etc.).
+
+🧱 Template Overview
+
+Purpose:
+To launch a t2.micro EC2 instance inside a custom VPC with public internet access, managed through AWS CloudFormation.
+
+Main Resources Created:
+
+VPC — Creates a new isolated network for your AWS resources.
+
+Subnet — A smaller segment inside the VPC for EC2 placement.
+
+Internet Gateway (IGW) — Allows the EC2 instance to connect to the internet.
+
+Route Table + Route — Defines internet routing rules through the IGW.
+
+Security Group — Controls inbound and outbound traffic (allows SSH & HTTP).
+
+EC2 Instance — Launches a t2.micro instance using an Amazon Linux 2 AMI.
+
+Outputs — Displays useful information like Instance ID, Public IP, and Public DNS URL after deployment.
+
+⚙️ Step-by-Step Breakdown
+Section	Resource	Description
+1️⃣ MyVPC	AWS::EC2::VPC	Creates a Virtual Private Cloud with CIDR block 10.0.0.0/16.
+2️⃣ MySubnet	AWS::EC2::Subnet	Creates a public subnet 10.0.1.0/24 inside the VPC and auto-assigns public IPs.
+3️⃣ MyInternetGateway	AWS::EC2::InternetGateway	Enables VPC to connect to the Internet.
+4️⃣ AttachGateway	AWS::EC2::VPCGatewayAttachment	Attaches the Internet Gateway to the VPC.
+5️⃣ MyRouteTable	AWS::EC2::RouteTable	Defines routing rules for the subnet.
+6️⃣ MyRoute	AWS::EC2::Route	Adds a route to send all (0.0.0.0/0) traffic to the Internet Gateway.
+7️⃣ SubnetRouteTableAssociation	AWS::EC2::SubnetRouteTableAssociation	Links the route table to the subnet.
+8️⃣ MySecurityGroup	AWS::EC2::SecurityGroup	Allows inbound SSH (port 22) and HTTP (port 80) from anywhere.
+9️⃣ MyEC2Instance	AWS::EC2::Instance	Launches a t2.micro instance using the given AMI (ami-0c02fb55956c7d316), associates the subnet and security group, and assigns a public IP.
+🔟 Outputs	Outputs	Displays Instance ID, Public IP, and a ready-to-use URL for access.
+🧰 Pre-Requisites
+
+AWS CLI installed and configured (aws configure)
+
+A valid EC2 Key Pair in the region (replace my-keypair in the file)
+
+Region must support t2.micro instances
+
+Proper IAM permissions to create CloudFormation stacks
+
+📤 Deployment Command
+aws cloudformation create-stack \
+--stack-name ec2-demo \
+--template-body file://ec2-instance.yml \
+--capabilities CAPABILITY_IAM
+
+🧹 Delete Stack Command
+aws cloudformation delete-stack --stack-name ec2-demo
+
+*************************************************************************************************************
+=============================================================================================================
+*************************************************************************************************************
+
+
+#->1 What is Terraform?
+
+- Terraform is an Infrastructure as Code (IaC) tool.
+
+- You write your infrastructure in configuration files (HCL – HashiCorp Configuration Language).
+
+- Terraform can create, update, and destroy AWS resources (EC2, S3, VPC, RDS, etc.).
+
+- Changes are version-controlled like code.
+
+
+#->2 Prerequisites
+
+-Terraform installed on your system.
+
+*terraform -v
+
+-AWS CLI installed and configured
+
+*aws configure
+
+
+-It will ask for:
+
+  * AWS Access Key ID
+
+  * AWS Secret Access Key
+
+  * Default region
+
+  * Output format (optional)
+
+
+#->3 Basic Terraform Structure
+
+A Terraform project usually has:
+
+my-terraform-project/
+├── main.tf        # Primary configuration
+├── variables.tf   # Input variables
+├── outputs.tf     # Outputs
+├── provider.tf    # Cloud provider configuration
+
+
+#->4 Example: Create a t2.micro EC2 Instance on AWS
+
+1) provider.tf
+
+provider "aws" {
+  region = "ap-south-1" # Mumbai region
+    }
+
+
+2) main.tf
+
+resource "aws_instance" "my_ec2" {
+  ami           = "ami-07539529fd98896eb" # Amazon Linux 2 in Mumbai
+  instance_type = "t2.micro"
+  key_name      = "my-keypair" # Your existing key pair
+
+  tags = {
+    Name = "MyTerraformEC2"
+  }
+}
+
+
+3) outputs.tf
+
+output "instance_id" {
+  description = "The ID of the EC2 instance"
+  value       = aws_instance.my_ec2.id
+}
+
+output "public_ip" {
+  description = "Public IP of the EC2 instance"
+  value       = aws_instance.my_ec2.public_ip
+}
+
+
+#->5 Terraform Workflow
+
+1-Initialize Terraform
+
+  * terraform init
+   -Installs providers and modules.
+
+2-Plan the changes
+
+  * terraform plan
+  -Shows what Terraform will create or change.
+
+3-Apply the changes
+
+  * terraform apply
+  -Will ask for confirmation, then create resources.
+
+4-Destroy resources (if needed)
+  *terraform destroy
+ -Deletes all resources defined in your Terraform project.
+
+
+#->Advantages of Terraform on AWS:-
+
+Infrastructure is reproducible and version-controlled.
+
+Avoids manual mistakes in AWS console.
+
+Works with multiple providers (AWS, GCP, Azure) in the same workflow.
+
+Can manage complex infrastructure like VPCs, subnets, and load balancers.
+
+
+*************************************************************************************************************
+=============================================================================================================
+*************************************************************************************************************
+
+#->1️⃣ What is HCL?
+
+HCL is a declarative language created by HashiCorp.
+
+Declarative means you describe the desired state of infrastructure rather than writing step-by-step instructions.
+
+Terraform reads HCL files to know what resources to create, update, or delete.
+
+#->2️⃣ Key Features of HCL
+
+Human-readable: Easier to read than JSON or YAML for complex infrastructure.
+
+Structured and simple: Supports blocks, attributes, and expressions.
+
+Extensible: Can use variables, outputs, modules, and functions.
+
+Integration with Terraform: HCL is designed for Terraform to manage AWS, Azure, GCP, and other providers.
+
+#->3️⃣ HCL Syntax Basics
+🔹 Resource Block
+
+Defines a resource (like an EC2 instance or S3 bucket):
+
+resource "aws_instance" "my_ec2" {
+  ami           = "ami-07539529fd98896eb"
+  instance_type = "t2.micro"
+  key_name      = "my-keypair"
+
+  tags = {
+    Name = "MyEC2"
+  }
+}
+
+
+resource → keyword for creating a resource
+
+"aws_instance" → type of resource
+
+"my_ec2" → logical name (local reference)
+
+Inside {} → properties (attributes)
+
+🔹 Variable Block
+
+Allows parameterization:
+
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+  default     = "t2.micro"
+}
+
+
+You can use var.instance_type in your resource instead of hardcoding.
+
+🔹 Output Block
+
+Outputs information after deployment:
+
+output "public_ip" {
+  description = "The public IP of the EC2 instance"
+  value       = aws_instance.my_ec2.public_ip
+}
+
+
+Useful for referencing instance IDs, IPs, or S3 bucket names.
+
+🔹 Provider Block
+
+Specifies which cloud or service to use:
+
+provider "aws" {
+  region = "ap-south-1"
+}
 
 
 
 
 
 
-1
+
+
+

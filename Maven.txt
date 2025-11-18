@@ -1,12 +1,10 @@
 What is maven?
 
 - Build Management: Maven handles compiling, testing, packaging, and deploying code. It automates the build process
-- Dependency Management: Maven automatically manages external libraries or dependencies that a project needs.
-
+- Dependency Management: Maven automatically manages external libraries or dependencies that a project needs
 - Project Structure: Maven enforces a standard directory structure for projects, making it easier for developers to understand how a project is organized, regardless of who wrote the code
-
 - Repositories: Maven uses repositories
-  1. Central / Remote Repositories
+  1. Central / Remote Repostiories
   2. Local Repository
 - Plugins: Maven supports plugins to perform various tasks like compiling code, running tests, generating reports, and more
 - pom.xml (Project Object Model): The pom.xml file is at the heart of a Maven project. It contains configuration information like dependencies, build settings, and plugin definitions.
@@ -37,7 +35,6 @@ What is Archetype?
 - An archetype in Maven represents a template for generating a project. It’s a way to create a project with a predefined structure. Some common archetypes include:
 
 - quick-start: This is a basic template for a simple console application. It usually includes a simple structure with one class to get you started.
-
 web-app: This archetype is used to create a web application project. It sets up the necessary files and structure for a web-based project, often including directories for WEB-INF, and configurations for servlets, JSPs, etc.
 
 What is groupId? 
@@ -57,8 +54,7 @@ Version:
 The version refers to the version of your project or artifact. This can indicate the maturity and stability of the project:
 
 SNAPSHOT: This indicates that the project is still under development and is not yet finalized. It’s a work-in-progress version.
-
-RELEASE:
+RELEASE: This version has been finalized and is ready for production or delivery to clients. It’s stable and no longer changing.
 
 Note: Artifacts are stored in repositories (like Maven Central or private repositories(NEXUS / JFROG)) and can be dependencies for other project
 
@@ -100,10 +96,8 @@ The Parent Dependency:
 
 -spring-context is added as a direct dependency in your project.
 - When you add this dependency, Maven automatically resolves its transitive dependencies like spring-core, spring-beans, spring-aop, spring-expression, and spring-jcl.
-
 Transitive Dependencies:
 - These are transitive dependencies because they are required by spring-context, and Maven resolves them automatically.
-
 Excluding a Transitive Dependency (spring-aop):
 - Sometimes, you might not need all of these transitive dependencies. In this case, you might not want to include spring-aop in your project.
 - The <exclusions> tag is used to exclude spring-aop.
